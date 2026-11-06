@@ -1,0 +1,155 @@
+database:
+  host: localhost
+  port: 3306
+  name: life_userdata
+  username: life_userdata
+  password: life_userdata
+  # テーブル名の接頭辞 (azirank_playtime, azirank_rankup_log が作成される)
+  table-prefix: azirank_
+  pool-size: 4
+  properties: {}
+
+# オンラインプレイヤーのプレイ時間をDBへ書き込む間隔 (秒)
+flush-interval-seconds: 60
+# ランクアップの動作
+#   run:     コマンドを実行してランクアップする
+#   dry-run: 条件を満たした人をログに出すだけ (Autorank と並行稼働中はこれ)
+#   off:     チェックしない
+rankup-mode: dry-run
+# ランクアップ条件をチェックする間隔 (秒)
+check-interval-seconds: 60
+# ランクアップコマンド実行後、LuckPermsのグループが反映されるまで再実行しない時間 (秒)
+rankup-pending-seconds: 300
+# ランクのグループを1つも持っていないプレイヤーを最初のランク扱いにするか
+treat-no-rank-as-first: true
+# rank グループの LuckPerms server コンテキスト (AziPluginMessaging の rankableServers の値)
+# migrate audit-ranks / apply-ranks で使う
+luckperms-server: life
+# /azirank top の1ページあたりの件数
+leaderboard-page-size: 10
+# リーダーボードのキャッシュ時間 (秒)
+leaderboard-cache-seconds: 300
+
+# LuckPerms のグループ名を低い順に並べる。現在のランクは「所持している中で一番後ろのグループ」
+ranks:
+  - rank1
+  - rank2
+  - rank3
+  - rank4
+  - rank5
+  - rank6
+  - rank7
+  - rank8
+  - rank9
+  - rank10
+
+# キー = 昇格先のグループ。1つ前のランクからこのランクへ上がる条件と実行コマンド。
+# requirements:
+#   playtime:            合計プレイ時間 (例: 1d 2h 30m / 90m / 数字のみは分)
+#   mcmmo-power-level:   mcMMO のパワーレベル
+#   taxoffice:           TaxOffice のポイント
+# commands: コンソールから実行。%player% = プレイヤー名, %uuid% = UUID
+rankups:
+  rank2:
+    requirements:
+      mcmmo-power-level: 50
+      playtime: 20m
+      taxoffice: 20
+    commands:
+      - azipluginmessaging setrank rank2 %player%
+      - essentials:bc &f%player% &7が &fRank2 &7になりました！
+  rank3:
+    requirements:
+      mcmmo-power-level: 300
+      playtime: 2h 0m
+      taxoffice: 120
+    commands:
+      - azipluginmessaging setrank rank3 %player%
+      - essentials:bc &f%player% &7が &fRank3 &7になりました！
+  rank4:
+    requirements:
+      mcmmo-power-level: 700
+      playtime: 7h 20m
+      taxoffice: 500
+    commands:
+      - azipluginmessaging setrank rank4 %player%
+      - essentials:bc &f%player% &7が &fRank4 &7になりました！
+  rank5:
+    requirements:
+      mcmmo-power-level: 1200
+      playtime: 21h 40m
+      taxoffice: 1510
+    commands:
+      - azipluginmessaging setrank rank5 %player%
+      - essentials:bc &f%player% &7が &fRank5 &7になりました！
+  rank6:
+    requirements:
+      mcmmo-power-level: 1800
+      playtime: 3d 0h 0m
+      taxoffice: 5040
+    commands:
+      - azipluginmessaging setrank rank6 %player%
+      - essentials:bc &f%player% &7が &fRank6 &7になりました！
+  rank7:
+    requirements:
+      mcmmo-power-level: 3000
+      playtime: 9d 0h 20m
+      taxoffice: 15110
+    commands:
+      - azipluginmessaging setrank rank7 %player%
+      - essentials:bc &f%player% &7が &fRank7 &7になりました！
+      - linkchest %player%
+  rank8:
+    requirements:
+      mcmmo-power-level: 6000
+      playtime: 13d 12h 0m
+      taxoffice: 22680
+    commands:
+      - azipluginmessaging setrank rank8 %player%
+      - essentials:bc &f%player% &7が &fRank8 &7になりました！
+      - linkchest %player%
+  rank9:
+    requirements:
+      mcmmo-power-level: 10000
+      playtime: 18d 0h 20m
+      taxoffice: 30230
+    commands:
+      - azipluginmessaging setrank rank9 %player%
+      - essentials:bc &f%player% &7が &fRank9 &7になりました！
+      - linkchest %player%
+  rank10:
+    requirements:
+      mcmmo-power-level: 15000
+      playtime: 54d 0h 0m
+      taxoffice: 90720
+    commands:
+      - azipluginmessaging setrank rank10 %player%
+      - essentials:bc &f%player% &7が &fRank10 &7になりました！
+      - linkchest %player%
+      - linkchest %player%
+
+# MiniMessage 形式
+messages:
+  check-header: "<green>----- <gold><player></gold> のランク -----"
+  check-rank: "<gray>現在のランク: <white><rank>"
+  check-playtime: "<gray>合計プレイ時間: <white><playtime>"
+  check-next: "<gray>次のランク <white><next></white> の条件:"
+  check-max: "<gold>最高ランクに到達しています！"
+  requirement-line: " <status> <gray><description>: <white><current></white> / <required>"
+  status-done: "<green>✔"
+  status-not-done: "<red>✘"
+  requirement-playtime: "プレイ時間"
+  requirement-mcmmo: "mcMMO パワーレベル"
+  requirement-taxoffice: "納税ポイント"
+  top-header: "<green>----- プレイ時間ランキング (<page>/<pages>) -----"
+  top-line: "<gold><rank>. <aqua><player> <gray>- <white><playtime>"
+  player-not-found: "<red>プレイヤー <player> が見つかりません。"
+  loading: "<gray>読み込み中..."
+  reloaded: "<green>設定を再読み込みしました。"
+  playtime-set: "<green><player> のプレイ時間を <playtime> にしました。"
+  import-started: "<gray>プレイ時間の移行を開始します: <source>"
+  import-done: "<green>移行完了: <count> 件 (名前補完 <names> 件)"
+  audit-started: "<gray>ランクの突き合わせを開始します: <source>"
+  audit-done: "<green>突き合わせ完了: <total> 人中 一致 <same> / <red>LPの方が低い <lower></red> / <yellow>LPの方が高い <higher></yellow><newline><gray>詳細: <file>"
+  no-permission: "<red>権限がありません。"
+  error: "<red>エラーが発生しました。コンソールを確認してください。"

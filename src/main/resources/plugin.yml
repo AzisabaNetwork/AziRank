@@ -1,0 +1,26 @@
+name: AziRank
+description: $description
+version: '${version}'
+main: net.azisaba.azirank.AziRank
+api-version: '1.21.11'
+authors: [AzisabaNetwork]
+website: https://github.com/AzisabaNetwork/AziRank
+depend:
+  - LuckPerms
+softdepend:
+  - mcMMO
+  - TaxOffice
+commands:
+  azirank:
+    description: AziRank のランクとプレイ時間
+    permission: azirank.check
+    aliases: [ar]
+permissions:
+  azirank.check:
+    default: true
+  azirank.check.others:
+    default: op
+  azirank.top:
+    default: true
+  azirank.admin:
+    default: op
