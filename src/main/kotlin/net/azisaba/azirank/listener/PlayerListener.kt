@@ -18,6 +18,7 @@ class PlayerListener(private val plugin: AziRank) : Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     fun onQuit(e: PlayerQuitEvent) {
+        plugin.rankManager.clearPending(e.player.uniqueId)
         val entry = plugin.tracker.stop(e.player.uniqueId) ?: return
         Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable { plugin.tracker.save(listOf(entry)) })
     }

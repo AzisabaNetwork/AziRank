@@ -40,6 +40,10 @@ class RankManager(private val plugin: AziRank) {
     fun nextRankup(rankIndex: Int): Rankup? =
         config.ranks.getOrNull(rankIndex + 1)?.let { config.rankups[it] }
 
+    fun clearPending(uuid: UUID) {
+        pending.remove(uuid)
+    }
+
     fun status(uuid: UUID, mcmmo: Long?, online: Boolean): RankStatus {
         val rankIndex = loadRankIndex(uuid)
         val next = nextRankup(rankIndex)
@@ -50,7 +54,7 @@ class RankManager(private val plugin: AziRank) {
     private fun collectStats(uuid: UUID, mcmmo: Long?, online: Boolean, next: Rankup?): PlayerStats {
         val reqs = next?.requirements.orEmpty()
         return PlayerStats(
-            playtimeSeconds = plugin.tracker.getOnline(uuid) ?: if (online) null else plugin.db.getPlaytime(uuid),
+            playtimeSeconds = plugin.tracker.getOnline(uuid) ?: plugin.db.getPlaytime(uuid),
             mcmmoPowerLevel = mcmmo ?: if (!online && reqs.any { it is Requirement.McMMOPowerLevel }) plugin.mcmmo.getPowerLevelOffline(uuid) else null,
             taxPoints = if (reqs.any { it is Requirement.TaxOffice }) plugin.taxOffice.getPoints(uuid) else null,
         )
@@ -63,29 +67,34 @@ class RankManager(private val plugin: AziRank) {
         if (!running.compareAndSet(false, true)) return
         val snapshots = try {
             Bukkit.getOnlinePlayers()
-                .filter { plugin.tracker.getOnline(it.uniqueId) != null } // プレイ時間読み込み済みのみ
                 .map { Snapshot(it.uniqueId, it.name, plugin.mcmmo.getPowerLevel(it)) }
         } catch (e: Throwable) {
             running.set(false)
             throw e
         }
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable {
-            try {
-                for (s in snapshots) {
-                    try {
-                        checkOne(s)
-                    } catch (e: Exception) {
-                        plugin.logger.log(Level.WARNING, "Failed to check rank of ${s.name}", e)
+        try {
+            Bukkit.getScheduler().runTaskAsynchronously(plugin, Runnable {
+                try {
+                    for (s in snapshots) {
+                        try {
+                            checkOne(s)
+                        } catch (e: Exception) {
+                            plugin.logger.log(Level.WARNING, "Failed to check rank of ${s.name}", e)
+                        }
                     }
+                } finally {
+                    running.set(false)
                 }
-            } finally {
-                running.set(false)
-            }
-        })
+            })
+        } catch (e: Throwable) {
+            running.set(false)
+            throw e
+        }
     }
 
     private fun checkOne(s: Snapshot) {
-        val user = luckPerms.userManager.getUser(s.uuid) ?: return
+        val user = luckPerms.userManager.getUser(s.uuid)
+            ?: luckPerms.userManager.loadUser(s.uuid).join()
         val rankIndex = rankIndexOf(user)
         if (rankIndex < 0) return
 
@@ -117,7 +126,8 @@ class RankManager(private val plugin: AziRank) {
         for (cmd in rankup.commands) {
             val line = cmd.replace("%player%", player.name).replace("%uuid%", uuid.toString())
             try {
-                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line)
+                val ok = Bukkit.dispatchCommand(Bukkit.getConsoleSender(), line)
+                if (!ok) plugin.logger.warning("Rankup command failed (not executed): $line")
             } catch (e: Exception) {
                 plugin.logger.log(Level.WARNING, "Failed to run rankup command: $line", e)
             }
